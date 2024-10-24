@@ -1,8 +1,12 @@
+exports.authPaths = {
+    login: '/auth/login',
+    register: '/auth/register',
+    oauth: '/auth/oauth_login',
+}
 exports.paths = {
     home: '/',
     about: '/about',
     contact: '/contact',
-    login: '/login',
-    register: '/register',
     users: '/users',
+    addUsers: '/add-users',
 }

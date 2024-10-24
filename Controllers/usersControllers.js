@@ -1,6 +1,6 @@
-const { registerUsersService, getUsersService, updateUserService, deleteUserService } = require("../Services/usersService");
+const { getUsersService, updateUserService, deleteUserService, addUsersService } = require("../Services/usersService");
 
-exports.registerUser = registerUsersService
-exports.getUsers = getUsersService;
+exports.getUsersController = getUsersService;
 exports.updateUser = updateUserService;
 exports.deleteUser = deleteUserService;
+exports.addUserController = addUsersService; 
