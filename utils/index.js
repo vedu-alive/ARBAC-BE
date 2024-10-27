@@ -16,13 +16,13 @@ const mapUsersData = (users) => {
   return data;
 };
 const createToken = async (data) => {
-  const token = jwt.sign(data, process.env.JWT_SECRET, {
+  const token = await jwt.sign(data, process.env.JWT_SECRET, {
     expiresIn: "15m",
   });
   return token;
 };
 const createRefreshToken = async (data) => {
-  const token = jwt.sign(data, process.env.JWT_SECRET, {
+  const token = await jwt.sign(data, process.env.JWT_SECRET, {
     expiresIn: "7d",
   });
   return token;

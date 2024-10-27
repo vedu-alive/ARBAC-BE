@@ -1,3 +1,4 @@
+//* need to change token creation logic (as what data needs to be stored in refresh-token and token)
 const jwt = require("jsonwebtoken");
 const { createToken, createRefreshToken } = require("../utils");
 
@@ -7,19 +8,23 @@ async function registerService(req, res) {
     if (!email || !password || !name) {
       throw new Error("Missing required fields: email, password, or name");
     }
-    console.log(email, password, name);
-    const token = createToken(req.body);
-    const refreshToken = createRefreshToken(req.body);
-    res.status(200).json({
+    const token = await createToken(req.body);
+    const refreshToken = await createRefreshToken(req.body);
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "none",
+      maxAge: 24 * 7 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({
       message: "User registered successfully",
       user_name: name,
       user_email: email,
       token: token,
-      refreshToken: refreshToken,
     });
   } catch (err) {
     console.error(err.message);
-    res.status(400).json({
+    return res.status(400).json({
       error: err.message,
     });
   }
@@ -50,36 +55,75 @@ async function oauthService(req, res) {
     if (userInfo.error) {
       throw new Error(JSON.stringify(userInfo));
     }
-    console.log(userInfo);
     const token = await createToken(userInfo);
     const refreshToken = await createRefreshToken(userInfo);
-    res.status(200).json({
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "none",
+      maxAge: 24 * 7 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({
       message: "User logged in successfully",
       token: token,
-      refreshToken: refreshToken,
     });
   } catch (err) {
     console.error(err.message);
-    res.status(400).json(JSON.parse(err.message));
+    return res.status(400).json(JSON.parse(err.message));
   }
 }
 
 async function loginService(req, res) {
   const { email, password } = req.body;
+  console.log(req.body,"login service");
   try {
-    if (!email || !password) {
-      throw new Error("Missing required fields: email or password");
+    if (!email) {
+      throw new Error("user email is required!");
+    }
+    if (!password) {
+      throw new Error("user password is required!");
     }
     const token = await createToken(req.body);
     const refreshToken = await createRefreshToken(req.body);
-    res.status(200).json({
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: "none",
+      maxAge: 24 * 7 * 60 * 60 * 1000,
+    });
+    return res.status(200).json({
       message: "User logged in successfully",
       token: token,
-      refreshToken: refreshToken,
     });
   } catch (err) {
     console.error(err.message);
-    res.status(400).json({
+    return res.status(400).json({
+      error: err.message,
+    });
+  }
+}
+
+async function refreshTokenService(req, res) {
+  const refreshToken = req.cookies.refreshToken;
+  try {
+    if (!refreshToken) {
+      throw new Error("Unauthorized user! \n Token not found!");
+    }
+
+    jwt.verify(refreshToken, process.env.JWT_SECRET, async (err, user) => {
+      if (err) {
+        throw new Error("Invalid refresh token!");
+      }
+      const token = await createToken(user);
+      return res.status(200).json({
+        message: "Token refreshed successfully",
+        token: token,
+      });
+    });
+    
+  } catch (err) {
+    console.error(err.message);
+    return res.status(401).json({
       error: err.message,
     });
   }
@@ -89,4 +133,5 @@ module.exports = {
   registerService,
   oauthService,
   loginService,
+  refreshTokenService,
 };
